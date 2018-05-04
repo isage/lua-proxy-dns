@@ -5,4 +5,6 @@ dns-proxy with automatic banned ip detection
 luajit  
 luasocket
 
-You'll need to change interface ip in dns.lua
+# Running
+Modify config.lua, run with `luajit ./dns.lua`  
+You may need to run it as root, to bind to port 53

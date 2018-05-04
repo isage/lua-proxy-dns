@@ -2,6 +2,7 @@ local resolver = require("lib.resolver")
 local server = require("lib.server")
 local socket = require("socket")
 local http = require("socket.http")
+local config = require("config")
 
 
 function table_concat(t1,t2)
@@ -15,13 +16,13 @@ end
 local udp = socket.udp()
 
 local r, err = resolver:new{
-  nameservers = {"8.8.8.8", {"8.8.4.4", 53} },
+  nameservers = { config.upstream_dns1,  config.upstream_dns2 },
   retrans = 5,  -- 5 retransmissions on receive timeout
   timeout = 2000,  -- 2 sec
 }
 
 
-local res, err = udp:setsockname("192.168.2.104", 53)
+local res, err = udp:setsockname(config.listen_on, 53)
 if not res then
   print(err)
   os.exit(1)
