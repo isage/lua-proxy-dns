@@ -1,17 +1,48 @@
 local resolver = require("lib.resolver")
 local server = require("lib.server")
+local iputils = require("lib.iputils")
 local socket = require("socket")
 local http = require("socket.http")
 local config = require("config")
+local json = require("cjson")
 
-
-function table_concat(t1,t2)
+local function table_concat(t1,t2)
     for i=1,#t2 do
         t1[#t1+1] = t2[i]
     end
     return t1
 end
 
+local function file_load(filename)
+    local file
+    if filename == nil then
+        file = io.stdin
+    else
+        local err
+        file, err = io.open(filename, "rb")
+        if file == nil then
+            error(("Unable to read '%s': %s"):format(filename, err))
+        end
+    end
+    local data = file:read("*a")
+
+    if filename ~= nil then
+        file:close()
+    end
+
+    if data == nil then
+        error("Failed to read " .. filename)
+    end
+
+    return data
+end
+
+-- roscomsvoboda's json is double-encoded, ugh
+local json_text = file_load("blacklist.json")
+local t = json.decode(json_text)
+local ips = json.decode(t)
+
+local blacklist = iputils.parse_cidrs(ips)
 
 local udp = socket.udp()
 
@@ -28,6 +59,7 @@ if not res then
   os.exit(1)
 end
 
+print("Listening on "..config.listen_on)
 
 while 1 do
 
@@ -71,8 +103,7 @@ while 1 do
     local available = {}
     for i, ans in ipairs(answers) do
       if ans.type == server.TYPE_A then
-        local b, c, h = http.request("http://api.antizapret.info/get.php?item=".. ans.address .."&type=small")
-        if b == "1" then
+        if iputils.ip_in_cidrs(ans.address, blacklist) then
 --          print("Address "..ans.address.." banned. Skipping")
           banned[#banned+1]=ans.address
         else
