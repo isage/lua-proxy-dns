@@ -66,24 +66,19 @@ while 1 do
     end
     local cnt = 0
 
+    local banned = {}
+    local available = {}
     for i, ans in ipairs(answers) do
       if ans.type == server.TYPE_A then
-
-        if ans.name == "elb001-ubs-ft01.ubs.usw2.np.cy.s0.playstation.net." or ans.name == "elb001-ubs-ft01.ubs.usw2.np.cy.s0.playstation.net" then
-          print(ans.name)
-          dns:create_a_answer(ans.name, ans.ttl, "52.24.73.235")
-          cnt = cnt + 1
-        elseif ans.name == "elb001-prof-edge01.prof.usw2.np.cy.s0.playstation.net." or ans.name == "elb001-prof-edge01.prof.usw2.np.cy.s0.playstation.net" then
-          dns:create_a_answer(ans.name, ans.ttl, "52.43.15.141")
-          cnt = cnt + 1
+        local b, c, h = http.request("http://api.antizapret.info/get.php?item=".. ans.address .."&type=small")
+        if b == "1" then
+--          print("Address "..ans.address.." banned. Skipping")
+          banned[#banned+1]=ans.address
         else
-          local b, c, h = http.request("http://api.antizapret.info/get.php?item=".. ans.address .."&type=small")
-          if b == "1" then
-            print("Address "..ans.address.." banned. Skipping")
-          else
-            dns:create_a_answer(ans.name, ans.ttl, ans.address)
-            cnt = cnt + 1
-          end
+--          print("Address "..ans.address.." available")
+          available[#available+1]=ans.address
+          dns:create_a_answer(ans.name, ans.ttl, ans.address)
+          cnt = cnt + 1
         end
 
       elseif ans.type == server.TYPE_CNAME then
@@ -91,8 +86,10 @@ while 1 do
       end
     end
     if cnt < 1 then
-      print("No addresses left =/")
+      print("No not-banned addresses available =/")
     end
+    print("Available: "..table.concat(available, ", "))
+    print("Banned: "..table.concat(banned, ", "))
 
   elseif query.qtype == server.TYPE_AAAA then
     local answers, err, tries = r:query(query.qname, {qtype = query.qtype }, {})
