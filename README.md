@@ -2,8 +2,9 @@
 dns-proxy with automatic banned ip detection
 
 # Requirements
-luajit  
-luasocket
+- luajit
+- luasocket
+- lua-cjson
 
 # Running
 1. Get blacklist dump in json format: `wget 'https://reestr.rublacklist.net/api/v2/ips/json' -O blacklist.json`
